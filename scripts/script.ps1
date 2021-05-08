@@ -25,10 +25,12 @@ Copy-Item "$Env:TMP\tmpssh\OpenSSH-Win64\*" "$Env:ProgramFiles\OpenSSH"
 #endregion  [Download latest version of OpenSSH]
 
 
+
+#region     [Configure OpenSSH Server Service]
+
 if ((Get-Service -Name sshd).status -eq "Running")
 { Stop-Service -Name sshd }
 
-Start-Service -Name sshd
 
 # OPTIONAL but recommended:
 Set-Service -Name sshd -StartupType 'Automatic'
@@ -50,3 +52,17 @@ if (-Not $DefShell)
     else
     { New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "${Env:SystemRoot}\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force }
 }
+
+
+if (-Not (Test-Path -Path "$HOME\.ssh\sshd_config"))
+{ Copy-Item -Path "$Env:ProgramData\ssh\sshd_config" -Destination "$HOME\.ssh\sshd_config" }
+if (-Not ((Get-Item -Path "$Env:ProgramData\ssh\sshd_config").Attributes.ToString() -match "ReparsePoint"))
+{
+    Remove-Item -Path "$Env:ProgramData\ssh\sshd_config"
+    New-Item -Path "$Env:ProgramData\ssh\sshd_config" -ItemType SymbolicLink -Value "$HOME\.ssh\sshd_config"
+}
+
+
+Start-Service -Name sshd
+
+#endregion  [Configure OpenSSH Server Service]
