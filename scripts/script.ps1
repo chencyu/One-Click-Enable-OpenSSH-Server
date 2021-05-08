@@ -9,6 +9,22 @@ if ($SSH_Server_Need_Install)
 }
 
 
+#region     [Download latest version of OpenSSH]
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$url = 'https://github.com/PowerShell/Win32-OpenSSH/releases/latest/'
+$request = [System.Net.WebRequest]::Create($url)
+$request.AllowAutoRedirect = $false
+$response = $request.GetResponse()
+$file_url = $([String]$response.GetResponseHeader("Location")).Replace('tag', 'download') + '/OpenSSH-Win64.zip'
+Invoke-WebRequest -Uri $file_url -OutFile "$Env:TMP\OpenSSH-Win64.zip"
+if (-Not (Test-Path -Path "$Env:TMP\tmpssh")) { mkdir "$Env:TMP\tmpssh" }
+Expand-Archive -Path "$Env:TMP\OpenSSH-Win64.zip" -DestinationPath "$Env:TMP\tmpssh"
+if (-Not (Test-Path -Path "$Env:ProgramFiles\OpenSSH")) { mkdir "$Env:ProgramFiles\OpenSSH" }
+Copy-Item "$Env:TMP\tmpssh\OpenSSH-Win64\*" "$Env:ProgramFiles\OpenSSH"
+&"$Env:ProgramFiles\OpenSSH\install-sshd.ps1"
+#endregion  [Download latest version of OpenSSH]
+
+
 if ((Get-Service -Name sshd).status -eq "Running")
 { Stop-Service -Name sshd }
 
