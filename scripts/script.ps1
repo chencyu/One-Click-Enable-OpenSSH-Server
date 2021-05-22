@@ -9,6 +9,18 @@
 # }
 
 
+function Repair-Permission($file)
+{
+    $acl = Get-Acl "$file"
+    $acl.SetAccessRuleProtection($true, $false)
+    $administratorsRule = New-Object system.security.accesscontrol.filesystemaccessrule("Administrators", "FullControl", "Allow")
+    $systemRule = New-Object system.security.accesscontrol.filesystemaccessrule("SYSTEM", "FullControl", "Allow")
+    $acl.SetAccessRule($administratorsRule)
+    $acl.SetAccessRule($systemRule)
+    $acl | Set-Acl
+}
+
+
 #region     [Download latest version of OpenSSH]
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $url = 'https://github.com/PowerShell/Win32-OpenSSH/releases/latest/'
@@ -64,7 +76,12 @@ if (-Not ((Get-Item -Path "$Env:ProgramData\ssh\sshd_config").Attributes.ToStrin
     Remove-Item -Path "$Env:ProgramData\ssh\sshd_config"
     New-Item -Path "$Env:ProgramData\ssh\sshd_config" -ItemType SymbolicLink -Value "$HOME\.ssh\sshd_config"
 }
+Repair-Permission "$Env:ProgramData\ssh\sshd_config"
 
+
+if (-Not (Test-Path -Path "$Env:ProgramData\ssh\administrators_authorized_keys"))
+{ New-Item -Path "$Env:ProgramData\ssh\administrators_authorized_keys" -ItemType SymbolicLink -Value "$HOME\.ssh\authorized_keys" }
+Repair-Permission "$Env:ProgramData\ssh\administrators_authorized_keys"
 
 Start-Service -Name sshd
 
