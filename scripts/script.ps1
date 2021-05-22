@@ -54,6 +54,9 @@ if (-Not $DefShell)
 }
 
 
+if (-Not (Test-Path -Path "$HOME\.ssh"))
+{ mkdir "$HOME\.ssh" }
+
 if (-Not (Test-Path -Path "$HOME\.ssh\sshd_config"))
 { Copy-Item -Path "$Env:ProgramData\ssh\sshd_config" -Destination "$HOME\.ssh\sshd_config" }
 if (-Not ((Get-Item -Path "$Env:ProgramData\ssh\sshd_config").Attributes.ToString() -match "ReparsePoint"))
