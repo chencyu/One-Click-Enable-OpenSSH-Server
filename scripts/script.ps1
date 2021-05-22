@@ -1,12 +1,12 @@
 #Requires -RunAsAdministrator
 
-$SSH_Server_Need_Install = (Get-WindowsCapability -Online | Where-Object -Property "Name" -like 'OpenSSH.Server*').State -eq "NotPresent"
+# $SSH_Server_Need_Install = (Get-WindowsCapability -Online | Where-Object -Property "Name" -like 'OpenSSH.Server*').State -eq "NotPresent"
 
-if ($SSH_Server_Need_Install)
-{
-    $OpenSSH_Server_FeatureName = (Get-WindowsCapability -Online | Where-Object -Property "Name" -like 'OpenSSH.Server*').Name
-    Add-WindowsCapability -Online -Name "$OpenSSH_Server_FeatureName"
-}
+# if ($SSH_Server_Need_Install)
+# {
+#     $OpenSSH_Server_FeatureName = (Get-WindowsCapability -Online | Where-Object -Property "Name" -like 'OpenSSH.Server*').Name
+#     Add-WindowsCapability -Online -Name "$OpenSSH_Server_FeatureName"
+# }
 
 
 #region     [Download latest version of OpenSSH]
