@@ -1,12 +1,5 @@
 #Requires -RunAsAdministrator
 
-# $SSH_Server_Need_Install = (Get-WindowsCapability -Online | Where-Object -Property "Name" -like 'OpenSSH.Server*').State -eq "NotPresent"
-
-# if ($SSH_Server_Need_Install)
-# {
-#     $OpenSSH_Server_FeatureName = (Get-WindowsCapability -Online | Where-Object -Property "Name" -like 'OpenSSH.Server*').Name
-#     Add-WindowsCapability -Online -Name "$OpenSSH_Server_FeatureName"
-# }
 
 
 function Repair-Permission($file)
@@ -19,6 +12,7 @@ function Repair-Permission($file)
     $acl.SetAccessRule($systemRule)
     $acl | Set-Acl
 }
+
 
 
 #region     [Download latest version of OpenSSH]
@@ -39,21 +33,26 @@ Copy-Item "$Env:TMP\tmpssh\OpenSSH-Win64\*" "$Env:ProgramFiles\OpenSSH"
 
 
 #region     [Configure OpenSSH Server Service]
+Start-Service -Name ssh-agent
+Start-Service -Name sshd
+Stop-Service -Name ssh-agent
+Stop-Service -Name sshd
 
-if ((Get-Service -Name sshd).status -eq "Running")
-{ Stop-Service -Name sshd }
 
 
 # OPTIONAL but recommended:
 Set-Service -Name sshd -StartupType 'Automatic'
 
 
+
 # There should be a firewall rule named "OpenSSH-Server-In-TCP", which should be enabled
-if (-Not ((Get-NetFirewallRule -Name "*ssh*server*").Name -like "*OpenSSH*Server*"))
+if (-Not (Get-NetFirewallRule -Name "*sshd*"))
 {
     # If the firewall does not exist, create one
     New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
 }
+
+
 
 # Set default to PowerShell 7 rather than Windows PowerShell 5.1 rather than CMD (set by default)
 $DefShell = Get-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell
@@ -66,23 +65,37 @@ if (-Not $DefShell)
 }
 
 
+
 if (-Not (Test-Path -Path "$HOME\.ssh"))
 { mkdir "$HOME\.ssh" }
 
-if (-Not (Test-Path -Path "$HOME\.ssh\sshd_config"))
-{ Copy-Item -Path "$Env:ProgramData\ssh\sshd_config" -Destination "$HOME\.ssh\sshd_config" }
-if (-Not ((Get-Item -Path "$Env:ProgramData\ssh\sshd_config").Attributes.ToString() -match "ReparsePoint"))
+
+
+$sshd_config = "$Env:ProgramData\ssh\sshd_config"
+if (Test-Path -Path "$sshd_config")
 {
-    Remove-Item -Path "$Env:ProgramData\ssh\sshd_config"
-    New-Item -Path "$Env:ProgramData\ssh\sshd_config" -ItemType SymbolicLink -Value "$HOME\.ssh\sshd_config"
+    $sshd_config_content = (Get-Content -Path "$sshd_config" -Raw)
+    $sshd_config_content = $sshd_config_content.Replace("`r`n# PubkeyAuthentication yes", "`r`nPubkeyAuthentication yes")
+    $sshd_config_content = $sshd_config_content.Replace("`r`nMatch Group administrators`r`n", "`r`n# Match Group administrators`r`n# ")
+    Write-Output "$sshd_config_content" > "$sshd_config"
 }
-Repair-Permission "$Env:ProgramData\ssh\sshd_config"
+Repair-Permission "$sshd_config"
 
 
-if (-Not (Test-Path -Path "$Env:ProgramData\ssh\administrators_authorized_keys"))
-{ New-Item -Path "$Env:ProgramData\ssh\administrators_authorized_keys" -ItemType SymbolicLink -Value "$HOME\.ssh\authorized_keys" }
-Repair-Permission "$Env:ProgramData\ssh\administrators_authorized_keys"
 
+$pubkeys = "$Env:ProgramData\ssh\administrators_authorized_keys"
+if (-Not (Test-Path -Path ))
+{ Write-Output "" > "$pubkeys" }
+Repair-Permission "$pubkeys"
+
+$pubkeys = "$HOME\.ssh\authorized_keys"
+if (-Not (Test-Path -Path ))
+{ Write-Output "" > "$pubkeys" }
+Repair-Permission "$pubkeys"
+
+
+
+Start-Service -Name ssh-agent
 Start-Service -Name sshd
 
 #endregion  [Configure OpenSSH Server Service]
