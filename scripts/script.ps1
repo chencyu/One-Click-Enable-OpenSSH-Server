@@ -39,6 +39,12 @@ Stop-Service -Name ssh-agent
 Stop-Service -Name sshd
 
 
+$PATH_CONTENT = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+if (-Not($PATH_CONTENT.Split(';').Contains("$Env:ProgramFiles\OpenSSH")))
+{
+    [Environment]::SetEnvironmentVariable("PATH", "$Env:ProgramFiles\OpenSSH;$PATH_CONTENT", "Machine")
+}
+
 
 # OPTIONAL but recommended:
 Set-Service -Name sshd -StartupType 'Automatic'
