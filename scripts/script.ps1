@@ -90,12 +90,12 @@ Repair-Permission "$sshd_config"
 
 
 $pubkeys = "$Env:ProgramData\ssh\administrators_authorized_keys"
-if (-Not (Test-Path -Path ))
+if (-Not (Test-Path -Path "$pubkeys"))
 { Write-Output "" > "$pubkeys" }
 Repair-Permission "$pubkeys"
 
 $pubkeys = "$HOME\.ssh\authorized_keys"
-if (-Not (Test-Path -Path ))
+if (-Not (Test-Path -Path "$pubkeys"))
 { Write-Output "" > "$pubkeys" }
 Repair-Permission "$pubkeys"
 
