@@ -16,7 +16,10 @@ function Repair-Permission($file)
 
 try
 {
-
+    # make sure old version sshd is stop.
+    Stop-Service -Name ssh-agent
+    Stop-Service -Name sshd
+    
     #region     [Download latest version of OpenSSH]
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = 'https://github.com/PowerShell/Win32-OpenSSH/releases/latest/'
