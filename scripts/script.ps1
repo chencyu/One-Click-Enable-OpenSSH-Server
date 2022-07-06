@@ -103,6 +103,9 @@ try
     if (-Not (Test-Path -Path "$pubkeys"))
     { Write-Output "" > "$pubkeys" }
     Repair-Permission "$pubkeys"
+    
+    
+    # Add $Env:PATH\ProgramFiles\OpenSSH into SYSTEM PATH
 
 
 
